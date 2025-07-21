@@ -184,7 +184,7 @@ if (modalType === 'confirmWithdraw') {
           gap: '1rem',
         }}
       >
-        {/* Botón de cerrar arriba a la derecha */}
+        {/* Botón cerrar (X) */}
         <button
           onClick={() => setModalType(null)}
           className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -204,21 +204,23 @@ if (modalType === 'confirmWithdraw') {
           <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
         </div>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setModalType('withdraw')}>
-            Editar
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => handleCopy(requiredEthDepositAddress)}
-            className="bg-purple-500 hover:bg-purple-600"
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(requiredEthDepositAddress);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-10 px-4 py-2 bg-purple-500 hover:bg-purple-600 transition"
           >
             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copiar Dirección
-          </AlertDialogAction>
-        </AlertDialogFooter>
+          </button>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
+
 
   };
 
