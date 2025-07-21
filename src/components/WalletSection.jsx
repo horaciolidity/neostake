@@ -174,29 +174,43 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
       }
 
       return (
-        <AlertDialog open={modalType === 'withdraw'} onOpenChange={() => setModalType(null)}>
-          <AlertDialogContent className="max-w-md w-full overflow-auto p-6">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
-                Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
-              <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModalType(null)}>Volver</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => handleCopy(requiredEthDepositAddress)}
-                className="bg-purple-500 hover:bg-purple-600"
-              >
-                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                Copiar Dirección
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <AlertDialog
+  open={modalType === 'withdraw'}
+  onOpenChange={() => {
+    setModalType(null);
+    setShowWithdrawForm(false);
+  }}
+>
+  <AlertDialogContent className="max-w-md w-full overflow-auto p-6">
+    <AlertDialogHeader>
+      <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
+      <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
+        Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
+      <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
+    </div>
+    <AlertDialogFooter>
+      <AlertDialogCancel
+        onClick={() => {
+          setModalType(null);
+          setShowWithdrawForm(false);
+        }}
+      >
+        Volver
+      </AlertDialogCancel>
+      <AlertDialogAction
+        onClick={() => handleCopy(requiredEthDepositAddress)}
+        className="bg-purple-500 hover:bg-purple-600"
+      >
+        {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+        Copiar Dirección
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+
       );
     }
   };
