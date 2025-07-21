@@ -168,7 +168,7 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
       );
     }
 
-    if (modalType === 'confirmWithdraw') {
+if (modalType === 'confirmWithdraw') {
       return (
         <AlertDialog open={true} onOpenChange={() => setModalType(null)}>
           <AlertDialogContent
