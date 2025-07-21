@@ -169,46 +169,57 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
     }
 
 if (modalType === 'confirmWithdraw') {
-      return (
-        <AlertDialog open={true} onOpenChange={() => setModalType(null)}>
-          <AlertDialogContent
-            className="z-[9999] bg-slate-900 text-white border border-slate-700 rounded-lg p-6 shadow-xl max-w-md w-full"
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              display: 'grid',
-              gap: '1rem',
-            }}
+  return (
+    <AlertDialog open={true} onOpenChange={() => setModalType(null)}>
+      <AlertDialogContent
+        className="z-[9999] bg-slate-900 text-white border border-slate-700 rounded-lg p-6 shadow-xl max-w-md w-full relative"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          display: 'grid',
+          gap: '1rem',
+        }}
+      >
+        {/* Botón de cerrar arriba a la derecha */}
+        <button
+          onClick={() => setModalType(null)}
+          className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          aria-label="Cerrar"
+        >
+          ✕
+        </button>
+
+        <AlertDialogHeader>
+          <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
+            Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
+          <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setModalType('withdraw')}>
+            Editar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => handleCopy(requiredEthDepositAddress)}
+            className="bg-purple-500 hover:bg-purple-600"
           >
-            <AlertDialogHeader>
-              <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
-                Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
-              <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setModalType(null)}>Editar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  handleCopy(requiredEthDepositAddress);
-                  setModalType(null);
-                }}
-                className="bg-purple-500 hover:bg-purple-600"
-              >
-                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copiar Dirección
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      );
-    }
+            {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copiar Dirección
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
   };
 
   return (
