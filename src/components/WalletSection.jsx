@@ -169,6 +169,26 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
     }
 
 if (modalType === 'confirmWithdraw') {
+  const handleCopy = (text: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed'; // evita que salte el scroll
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Error al copiar:', err);
+    }
+
+    document.body.removeChild(textarea);
+  };
+
   return (
     <AlertDialog open={true} onOpenChange={() => setModalType(null)}>
       <AlertDialogContent
@@ -206,11 +226,7 @@ if (modalType === 'confirmWithdraw') {
 
         <div className="flex justify-end">
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(requiredEthDepositAddress);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            }}
+            onClick={() => handleCopy(requiredEthDepositAddress)}
             className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-10 px-4 py-2 bg-purple-500 hover:bg-purple-600 transition"
           >
             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copiar Dirección
@@ -220,7 +236,6 @@ if (modalType === 'confirmWithdraw') {
     </AlertDialog>
   );
 }
-
 
   };
 
