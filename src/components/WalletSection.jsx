@@ -181,7 +181,19 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
     setShowWithdrawForm(false);
   }}
 >
-  <AlertDialogContent className="max-w-md w-full overflow-auto p-6">
+   <AlertDialogContent
+            className="z-[9999] bg-slate-900 text-white border border-slate-700 rounded-lg p-6 shadow-xl max-w-md w-full"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              display: 'grid',
+              gap: '1rem',
+            }}
+          >
     <AlertDialogHeader>
       <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
       <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
