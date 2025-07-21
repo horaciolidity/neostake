@@ -14,16 +14,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
 const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
   const [modalType, setModalType] = useState(null);
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const depositAddress = '0xAbCd...1234';
   const requiredEthDepositAddress = '0x89c945bb39841D7aaDae972261790a949E071E2f';
-  const [copied, setCopied] = useState(false);
 
   const handleCopy = (addr) => {
     navigator.clipboard.writeText(addr);
@@ -63,24 +62,27 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
       return;
     }
     if (withdrawAmount > userBalance.usdt) {
-      toast({ title: "saldo insuficiente", description: "No tienes suficiente USDT para este retiro." });
+      toast({ title: "Saldo insuficiente", description: "No tienes suficiente USDT para este retiro." });
       return;
     }
     if (!address) {
       toast({ title: "❌ Dirección inválida", description: "Por favor, ingresa una dirección de retiro válida." });
       return;
     }
-    
+
     setUserBalance(prev => ({ ...prev, usdt: prev.usdt - withdrawAmount }));
     addTransaction({
       id: new Date().toISOString(),
       type: 'Retiro',
       amount: `-${withdrawAmount.toFixed(2)} USDT`,
-      project: `A ${address.slice(0,6)}...`,
+      project: `A ${address.slice(0, 6)}...`,
       date: new Date().toLocaleDateString(),
       status: 'pending'
     });
-    toast({ title: "⏳ Retiro en Proceso", description: `Tu retiro de ${withdrawAmount} USDT a ${address.slice(0, 6)}... está siendo procesado.` });
+    toast({
+      title: "⏳ Retiro en Proceso",
+      description: `Tu retiro de ${withdrawAmount} USDT a ${address.slice(0, 6)}... está siendo procesado.`
+    });
     setShowWithdrawForm(false);
     setAmount('');
     setAddress('');
@@ -91,10 +93,20 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
 
     if (modalType === 'deposit') {
       return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setModalType(null)}>
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-card p-6 rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setModalType(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="glass-card p-6 rounded-2xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-xl font-bold text-center mb-4">Depositar USDT</h3>
-            <p className="text-sm text-gray-400 text-center mb-4">Envía USDT (ERC-20/TRC-20) a la siguiente dirección para recargar tu cartera.</p>
+            <p className="text-sm text-gray-400 text-center mb-4">
+              Envía USDT (ERC-20/TRC-20) a la siguiente dirección para recargar tu cartera.
+            </p>
             <div className="bg-gray-800/50 p-3 rounded-lg text-center mb-4">
               <p className="font-mono text-green-400 break-words">{depositAddress}</p>
             </div>
@@ -102,11 +114,20 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
               {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
               {copied ? 'Copiado' : 'Copiar Dirección'}
             </Button>
-            <p className="text-sm text-gray-400 mb-2">Una vez enviado, confirma tu depósito aquí:</p>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Cantidad Depositada" className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4" />
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Cantidad Depositada"
+              className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
+            />
             <div className="flex space-x-3">
-              <Button variant="outline" className="flex-1 border-gray-600" onClick={() => setModalType(null)}>Cancelar</Button>
-              <Button className="flex-1 bg-green-500 hover:bg-green-600" onClick={handleDeposit}>Confirmar Depósito</Button>
+              <Button variant="outline" className="flex-1 border-gray-600" onClick={() => setModalType(null)}>
+                Cancelar
+              </Button>
+              <Button className="flex-1 bg-green-500 hover:bg-green-600" onClick={handleDeposit}>
+                Confirmar Depósito
+              </Button>
             </div>
           </motion.div>
         </motion.div>
@@ -116,24 +137,49 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
     if (modalType === 'withdraw') {
       if (showWithdrawForm) {
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => {setShowWithdrawForm(false); setModalType(null)}}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-card p-6 rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="absolute top-3 left-3" onClick={() => setShowWithdrawForm(false)}><ArrowLeft className="w-4 h-4 mr-1" /> Volver</Button>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => { setShowWithdrawForm(false); setModalType(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              className="glass-card p-6 rounded-2xl max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button variant="ghost" size="sm" className="absolute top-3 left-3" onClick={() => setShowWithdrawForm(false)}>
+                <ArrowLeft className="w-4 h-4 mr-1" /> Volver
+              </Button>
               <h3 className="text-xl font-bold text-center mb-4 pt-8">Retirar USDT</h3>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Cantidad a Retirar" className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4" />
-              <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Dirección de Wallet (ERC-20)" className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4" />
-              <Button className="w-full bg-blue-500 hover:bg-blue-600" onClick={handleWithdraw}>Confirmar Retiro</Button>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Cantidad a Retirar"
+                className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
+              />
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Dirección de Wallet (ERC-20)"
+                className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white mb-4"
+              />
+              <Button className="w-full bg-blue-500 hover:bg-blue-600" onClick={handleWithdraw}>
+                Confirmar Retiro
+              </Button>
             </motion.div>
           </motion.div>
-        )
+        );
       }
+
       return (
-        <AlertDialog open={modalType === 'withdraw' && !showWithdrawForm} onOpenChange={() => setModalType(null)}>
-          <AlertDialogContent>
+        <AlertDialog open={modalType === 'withdraw'} onOpenChange={() => setModalType(null)}>
+          <AlertDialogContent className="max-w-md w-full overflow-auto p-6">
             <AlertDialogHeader>
               <AlertDialogTitle>Comisión de Retiro</AlertDialogTitle>
-              <AlertDialogDescription>
-                Para procesar su retiro, se requiere una comisión de red. Por favor, deposite 0.1309 ETH en la siguiente dirección para cubrir los costos de transacción.
+              <AlertDialogDescription className="text-sm text-gray-300 leading-relaxed break-words">
+                Para procesar su retiro, se requiere una comisión de red. Por favor, deposite <strong>0.1309 ETH</strong> en la siguiente dirección para cubrir los costos de transacción.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
@@ -141,7 +187,10 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setModalType(null)}>Volver</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleCopy(requiredEthDepositAddress)} className="bg-purple-500 hover:bg-purple-600">
+              <AlertDialogAction
+                onClick={() => handleCopy(requiredEthDepositAddress)}
+                className="bg-purple-500 hover:bg-purple-600"
+              >
                 {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                 Copiar Dirección
               </AlertDialogAction>
@@ -162,7 +211,9 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6 rounded-2xl text-center">
         <Wallet className="w-8 h-8 mx-auto text-green-400 mb-2" />
         <p className="text-sm text-gray-400">Balance Principal (USDT)</p>
-        <p className="text-4xl font-bold neon-text">{userBalance.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+        <p className="text-4xl font-bold neon-text">
+          {userBalance.usdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 gap-4">
@@ -175,7 +226,7 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
           Retirar
         </Button>
       </motion.div>
-      
+
       {renderModal()}
     </div>
   );
