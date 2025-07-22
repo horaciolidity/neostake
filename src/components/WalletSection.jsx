@@ -169,7 +169,7 @@ const WalletSection = ({ userBalance, setUserBalance, addTransaction }) => {
     }
 
 if (modalType === 'confirmWithdraw') {
-  const handleCopy = (text: string) => {
+const handleCopy = (text) => {
     const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed'; // evita que salte el scroll
