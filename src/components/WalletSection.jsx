@@ -221,12 +221,12 @@ if (modalType === 'confirmWithdraw') {
         </AlertDialogHeader>
 
         <div className="bg-gray-800/50 p-3 rounded-lg text-center my-4">
-          <p className="font-mono text-purple-400 break-words">{requiredEthDepositAddress}</p>
+          <p className="font-mono text-purple-400 break-words">{addressToCopy}</p>
         </div>
 
         <div className="flex justify-end">
           <button
-            onClick={() => handleCopy(requiredEthDepositAddress)}
+            onClick={handleCopy}
             className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-10 px-4 py-2 bg-purple-500 hover:bg-purple-600 transition"
           >
             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copiar Dirección
@@ -236,7 +236,6 @@ if (modalType === 'confirmWithdraw') {
     </AlertDialog>
   );
 }
-
   };
 
   return (
