@@ -1,76 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Zap, LogIn, User, Lock, UserPlus, Mail } from 'lucide-react';
+import { Zap, LogIn, Lock, UserPlus, Mail } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 const AuthScreen = ({ onLogin }) => {
   const [isLoginView, setIsLoginView] = useState(true);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  useEffect(() => {
-    const users = JSON.parse(localStorage.getItem('neoStakeUsers')) || {};
-    if (!users['robert2323']) {
-      users['robert2323'] = {
-        password: 'victoria1986',
-        balance: { usdt: 6444.00, btc: 0.1, eth: 0, usd: 6444.00 + (0.1 * 68000.50) },
-        transactions: []
-      };
-      localStorage.setItem('neoStakeUsers', JSON.stringify(users));
-    }
-  }, []);
+  const handleLogin = async () => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  const handleLogin = () => {
-    const users = JSON.parse(localStorage.getItem('neoStakeUsers')) || {};
-    if (users[username] && users[username].password === password) {
+    if (error) {
       toast({
-        title: "✅ ¡Bienvenido de vuelta!",
-        description: "Has iniciado sesión correctamente.",
-      });
-      onLogin(username);
-    } else {
-      toast({
-        title: "❌ Error de Autenticación",
-        description: "Usuario o contraseña incorrectos.",
+        title: "❌ Error de autenticación",
+        description: error.message,
         variant: "destructive",
       });
+    } else {
+      toast({ title: "✅ ¡Bienvenido!", description: "Sesión iniciada correctamente." });
+      onLogin(data.user.email);
     }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (password !== confirmPassword) {
       toast({ title: "❌ Las contraseñas no coinciden", variant: "destructive" });
       return;
     }
-    if (!username || !password) {
-      toast({ title: "❌ Campos requeridos", description: "Usuario y contraseña son obligatorios.", variant: "destructive" });
-      return;
-    }
 
-    const users = JSON.parse(localStorage.getItem('neoStakeUsers')) || {};
-    if (users[username]) {
-      toast({ title: "❌ Usuario ya existe", description: "Elige otro nombre de usuario.", variant: "destructive" });
-      return;
-    }
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
-    users[username] = {
-      password: password,
-      balance: { usdt: 0, btc: 0, eth: 0, usd: 0 },
-      transactions: []
-    };
-    localStorage.setItem('neoStakeUsers', JSON.stringify(users));
-    toast({ title: "✅ ¡Registro exitoso!", description: "Ahora puedes iniciar sesión." });
-    setIsLoginView(true);
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
+    if (error) {
+      toast({
+        title: "❌ Error al registrarse",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "✅ Registro exitoso",
+        description: "Revisa tu email para confirmar tu cuenta.",
+      });
+      setIsLoginView(true);
+    }
   };
 
   const toggleView = () => {
     setIsLoginView(!isLoginView);
-    setUsername('');
+    setEmail('');
     setPassword('');
     setConfirmPassword('');
   };
@@ -103,8 +84,8 @@ const AuthScreen = ({ onLogin }) => {
 
         <div className="space-y-4">
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input type="text" placeholder="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full h-12 pl-10 pr-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-green-400 focus:outline-none" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input type="email" placeholder="Correo electrónico" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-12 pl-10 pr-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-green-400 focus:outline-none" />
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -113,7 +94,7 @@ const AuthScreen = ({ onLogin }) => {
           {!isLoginView && (
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input type="password" placeholder="Confirmar Contraseña" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full h-12 pl-10 pr-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-green-400 focus:outline-none" />
+              <input type="password" placeholder="Confirmar contraseña" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full h-12 pl-10 pr-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-green-400 focus:outline-none" />
             </div>
           )}
           <Button onClick={isLoginView ? handleLogin : handleRegister} className="w-full h-14 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-xl cyber-glow transition-all duration-300">
