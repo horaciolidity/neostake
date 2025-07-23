@@ -1,15 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Settings, Shield, Bell, HelpCircle, LogOut, Edit, Copy, Award, TrendingUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
   const [activeTab, setActiveTab] = useState('profile');
 
+  useEffect(() => {
+    const initProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) {
+        const params = new URLSearchParams(window.location.search);
+        const refCode = params.get('ref');
+        let referrerId = null;
+
+        if (refCode) {
+          const { data: refProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('referral_code', refCode)
+            .single();
+
+          if (refProfile) referrerId = refProfile.id;
+        }
+
+        const referralCode = `NEOSTAKE-${user.id.substring(0, 6)}`;
+
+        await supabase.from('profiles').insert({
+          id: user.id,
+          balance_usdt: 0,
+          balance_eth: 0,
+          referrer_id: referrerId,
+          referral_code: referralCode,
+        });
+
+        if (referrerId) {
+          await supabase.from('referrals').insert({
+            user_id: referrerId,
+            referred_id: user.id,
+          });
+        }
+      }
+    };
+
+    initProfile();
+  }, []);
+
   const userStats = {
-    totalInvested: '$0.00', // This would be calculated from transactions
-    totalReturns: '$0.00', // This would be calculated from transactions
+    totalInvested: '$0.00',
+    totalReturns: '$0.00',
     referrals: 0,
     nftCount: 0,
     level: 'Inversor Nivel 1'
@@ -68,7 +117,7 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
         </div>
         <h2 className="text-xl font-bold mb-2">Usuario NeoStake</h2>
         <p className="text-gray-400 mb-4">{userStats.level}</p>
-        
+
         <div className="flex items-center justify-center space-x-2 mb-4">
           <span className="text-sm text-gray-400 font-mono">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
           <Button
@@ -100,7 +149,7 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
       >
         <div className="glass-card p-4 rounded-xl text-center">
           <TrendingUp className="w-6 h-6 text-green-400 mx-auto mb-2" />
-          <p className="text-lg font-bold">${userBalance.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+          <p className="text-lg font-bold">${userBalance.usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="text-sm text-gray-400">Balance Total</p>
         </div>
         <div className="glass-card p-4 rounded-xl text-center">
@@ -167,7 +216,7 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
   const renderSettingsTab = () => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Configuración</h3>
-      
+
       <div className="space-y-3">
         <Button onClick={() => handleSettings('Notificaciones')} variant="ghost" className="w-full justify-start text-left p-4 h-auto glass-card rounded-xl">
           <Bell className="w-5 h-5 mr-3" />
