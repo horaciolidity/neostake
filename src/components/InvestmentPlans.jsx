@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Droplet, TrendingUp, Zap, Shield, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 const InvestmentPlans = ({ userBalance, setUserBalance }) => {
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -47,7 +48,13 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
     },
   ];
 
-  const handleInvest = () => {
+  const getPlanColor = (color) => {
+    if (color === 'blue') return 'border-blue-500/50 hover:border-blue-500';
+    if (color === 'green') return 'border-green-500/50 hover:border-green-500';
+    if (color === 'purple') return 'border-purple-500/50 hover:border-purple-500';
+  };
+
+  const handleInvest = async () => {
     const amount = parseFloat(investmentAmount);
     if (!amount || amount <= 0) {
       toast({ title: "❌ Cantidad inválida", description: "Por favor, ingresa una cantidad válida." });
@@ -58,23 +65,42 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
       return;
     }
     if (amount > userBalance.usdt) {
-      toast({ title: "saldo insuficiente", description: "No tienes suficiente USDT para esta inversión." });
+      toast({ title: "❌ Saldo insuficiente", description: "No tienes suficiente USDT para esta inversión." });
       return;
     }
 
-    setUserBalance(prev => ({ ...prev, usdt: prev.usdt - amount, usd: prev.usd - amount }));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Actualizar saldo en Supabase
+    const newBalance = userBalance.usdt - amount;
+    const { error: balanceError } = await supabase
+      .from('profiles')
+      .update({ balance_usdt: newBalance })
+      .eq('id', user.id);
+
+    if (balanceError) {
+      toast({ title: "Error al actualizar saldo", description: balanceError.message });
+      return;
+    }
+
+    // Registrar compra
+    await supabase.from('purchases').insert({
+      user_id: user.id,
+      plan_name: selectedPlan.name,
+      amount_usdt: amount,
+    });
+
+    // Actualizar balance en frontend
+    setUserBalance(prev => ({ ...prev, usdt: newBalance, usd: newBalance }));
+
     toast({
       title: "🚀 ¡Inversión Exitosa!",
       description: `Has invertido ${amount} USDT en el ${selectedPlan.name}.`,
     });
+
     setSelectedPlan(null);
     setInvestmentAmount('');
-  };
-
-  const getPlanColor = (color) => {
-    if (color === 'blue') return 'border-blue-500/50 hover:border-blue-500';
-    if (color === 'green') return 'border-green-500/50 hover:border-green-500';
-    if (color === 'purple') return 'border-purple-500/50 hover:border-purple-500';
   };
 
   return (
