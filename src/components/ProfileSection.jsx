@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabaseClient';
 
 const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
   const [activeTab, setActiveTab] = useState('profile');
+  const [isEditing, setIsEditing] = useState(false);
+  const [username, setUsername] = useState('Usuario NeoStake');
 
   useEffect(() => {
     const initProfile = async () => {
@@ -15,9 +17,13 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, full_name')
         .eq('id', user.id)
         .single();
+
+      if (profile?.full_name) {
+        setUsername(profile.full_name);
+      }
 
       if (!profile) {
         const params = new URLSearchParams(window.location.search);
@@ -42,6 +48,7 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
           balance_eth: 0,
           referrer_id: referrerId,
           referral_code: referralCode,
+          full_name: username
         });
 
         if (referrerId) {
@@ -56,35 +63,28 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
     initProfile();
   }, []);
 
-  const userStats = {
-    totalInvested: '$0.00',
-    totalReturns: '$0.00',
-    referrals: 0,
-    nftCount: 0,
-    level: 'Inversor Nivel 1'
+  const handleEditProfile = () => {
+    setIsEditing(true);
   };
 
-  const achievements = [
-    { id: 1, name: 'Primer Stake', icon: '🎯', earned: false },
-    { id: 2, name: 'Hodler', icon: '💎', earned: false },
-    { id: 3, name: 'Diversificado', icon: '🌟', earned: false },
-    { id: 4, name: 'Ballena', icon: '🐋', earned: false },
-  ];
+  const handleSaveProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  const walletAddress = '0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4';
+    await supabase.from('profiles').update({ full_name: username }).eq('id', user.id);
+
+    toast({
+      title: "✅ Perfil actualizado",
+      description: "Tu nombre ha sido actualizado exitosamente.",
+    });
+    setIsEditing(false);
+  };
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(walletAddress);
     toast({
       title: "📋 Dirección copiada",
       description: "La dirección de tu wallet ha sido copiada al portapapeles.",
-    });
-  };
-
-  const handleEditProfile = () => {
-    toast({
-      title: "🚧 Edición de perfil no implementada aún",
-      description: "¡No te preocupes! Puedes solicitarla en tu próximo prompt! 🚀",
     });
   };
 
@@ -105,6 +105,23 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
     }, 1000);
   };
 
+  const walletAddress = '0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4';
+
+  const userStats = {
+    totalInvested: '$0.00',
+    totalReturns: '$0.00',
+    referrals: 0,
+    nftCount: 0,
+    level: 'Inversor Nivel 1'
+  };
+
+  const achievements = [
+    { id: 1, name: 'Primer Stake', icon: '🎯', earned: false },
+    { id: 2, name: 'Hodler', icon: '💎', earned: false },
+    { id: 3, name: 'Diversificado', icon: '🌟', earned: false },
+    { id: 4, name: 'Ballena', icon: '🐋', earned: false },
+  ];
+
   const renderProfileTab = () => (
     <div className="space-y-6">
       <motion.div
@@ -115,7 +132,7 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
         <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
           <User className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-xl font-bold mb-2">Usuario NeoStake</h2>
+        <h2 className="text-xl font-bold mb-2">{username}</h2>
         <p className="text-gray-400 mb-4">{userStats.level}</p>
 
         <div className="flex items-center justify-center space-x-2 mb-4">
@@ -130,15 +147,30 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
           </Button>
         </div>
 
-        <Button
-          onClick={handleEditProfile}
-          variant="outline"
-          size="sm"
-          className="border-gray-600 text-gray-300 hover:bg-gray-800"
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          Editar Perfil
-        </Button>
+        {!isEditing ? (
+          <Button
+            onClick={handleEditProfile}
+            variant="outline"
+            size="sm"
+            className="border-gray-600 text-gray-300 hover:bg-gray-800"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Editar Perfil
+          </Button>
+        ) : (
+          <div className="space-y-2 mt-4">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-2 rounded border border-gray-600 bg-gray-900 text-white"
+              placeholder="Tu nombre"
+            />
+            <Button onClick={handleSaveProfile} className="w-full">
+              Guardar
+            </Button>
+          </div>
+        )}
       </motion.div>
 
       <motion.div
@@ -216,7 +248,6 @@ const ProfileSection = ({ onDisconnect, userBalance, transactionHistory }) => {
   const renderSettingsTab = () => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Configuración</h3>
-
       <div className="space-y-3">
         <Button onClick={() => handleSettings('Notificaciones')} variant="ghost" className="w-full justify-start text-left p-4 h-auto glass-card rounded-xl">
           <Bell className="w-5 h-5 mr-3" />
