@@ -10,6 +10,8 @@ import WalletSection from '@/components/WalletSection';
 import ProfileSection from '@/components/ProfileSection';
 import MobileNavigation from '@/components/MobileNavigation';
 import ReferralSystem from '@/components/ReferralSystem';
+import AdminPanel from '@/components/AdminPanel';
+import { supabase } from '@/supabaseClient'; // Asegúrate de tener esto configurado
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,7 +24,6 @@ function App() {
     eth: 0,
     usd: 0
   });
-  const [transactionHistory, setTransactionHistory] = useState([]);
 
   const [coinPrices, setCoinPrices] = useState({
     bitcoin: { usd: 68000.50, usd_24h_change: 2.5 },
@@ -32,14 +33,14 @@ function App() {
 
   useEffect(() => {
     const priceInterval = setInterval(() => {
-      setCoinPrices(prevPrices => ({
-        bitcoin: { 
-          usd: prevPrices.bitcoin.usd + (Math.random() - 0.5) * 100,
-          usd_24h_change: prevPrices.bitcoin.usd_24h_change + (Math.random() - 0.5) * 0.1
+      setCoinPrices(prev => ({
+        bitcoin: {
+          usd: prev.bitcoin.usd + (Math.random() - 0.5) * 100,
+          usd_24h_change: prev.bitcoin.usd_24h_change + (Math.random() - 0.5) * 0.1
         },
-        ethereum: { 
-          usd: prevPrices.ethereum.usd + (Math.random() - 0.5) * 50,
-          usd_24h_change: prevPrices.ethereum.usd_24h_change + (Math.random() - 0.5) * 0.1
+        ethereum: {
+          usd: prev.ethereum.usd + (Math.random() - 0.5) * 50,
+          usd_24h_change: prev.ethereum.usd_24h_change + (Math.random() - 0.5) * 0.1
         },
         tether: { usd: 1.00, usd_24h_change: 0.01 },
       }));
@@ -47,18 +48,45 @@ function App() {
     return () => clearInterval(priceInterval);
   }, []);
 
+  // ✅ Obtener perfil desde Supabase
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('neoStakeUser');
-    if (loggedInUser) {
-      const user = JSON.parse(loggedInUser);
-      setCurrentUser(user.username);
+    const fetchUser = async () => {
+      const {
+        data: { user },
+        error
+      } = await supabase.auth.getUser();
+      if (error || !user) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email, balance_usdt, balance_btc, balance_eth, is_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Error cargando perfil:', profileError);
+        setIsAuthenticated(false);
+        return;
+      }
+
       setIsAuthenticated(true);
-      setUserBalance(user.balance);
-      setTransactionHistory(user.transactions || []);
+      setCurrentUser(profile);
+      setUserBalance({
+        usdt: Number(profile.balance_usdt || 0),
+        btc: Number(profile.balance_btc || 0),
+        eth: Number(profile.balance_eth || 0),
+        usd: 0
+      });
+
       if (localStorage.getItem('neoStakeWalletConnected') === 'true') {
         setIsWalletConnected(true);
       }
-    }
+    };
+
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -66,67 +94,46 @@ function App() {
       const btcValue = userBalance.btc * coinPrices.bitcoin.usd;
       const ethValue = userBalance.eth * coinPrices.ethereum.usd;
       const totalUsd = userBalance.usdt + btcValue + ethValue;
-      setUserBalance(prev => ({...prev, usd: totalUsd}));
+      setUserBalance(prev => ({ ...prev, usd: totalUsd }));
     }
   }, [userBalance.usdt, userBalance.btc, userBalance.eth, coinPrices, currentUser]);
-
-  const addTransaction = (transaction) => {
-    setTransactionHistory(prev => [transaction, ...prev]);
-  };
-
-  useEffect(() => {
-    if (currentUser) {
-      const users = JSON.parse(localStorage.getItem('neoStakeUsers')) || {};
-      users[currentUser] = {
-        ...users[currentUser],
-        balance: userBalance,
-        transactions: transactionHistory,
-      };
-      localStorage.setItem('neoStakeUsers', JSON.stringify(users));
-      localStorage.setItem('neoStakeUser', JSON.stringify({ username: currentUser, balance: userBalance, transactions: transactionHistory }));
-    }
-  }, [userBalance, transactionHistory, currentUser]);
-
-  const handleLogin = (username) => {
-    const users = JSON.parse(localStorage.getItem('neoStakeUsers')) || {};
-    const userData = users[username];
-    setCurrentUser(username);
-    setIsAuthenticated(true);
-    setUserBalance(userData.balance);
-    setTransactionHistory(userData.transactions || []);
-    localStorage.setItem('neoStakeUser', JSON.stringify({ username, balance: userData.balance, transactions: userData.transactions || [] }));
-  };
 
   const handleWalletConnect = () => {
     setIsWalletConnected(true);
     localStorage.setItem('neoStakeWalletConnected', 'true');
   };
 
-  const handleDisconnect = () => {
+  const handleDisconnect = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setIsWalletConnected(false);
     setCurrentUser(null);
-    localStorage.removeItem('neoStakeUser');
     localStorage.removeItem('neoStakeWalletConnected');
     setActiveTab('home');
   };
-  
+
   const renderActiveSection = () => {
     if (!isWalletConnected) {
       return <WelcomeScreen onConnect={handleWalletConnect} userBalance={userBalance} />;
     }
-    
+
     switch (activeTab) {
       case 'home':
         return <Dashboard userBalance={userBalance} coinPrices={coinPrices} setActiveTab={setActiveTab} currentUser={currentUser} />;
       case 'plans':
-        return <InvestmentPlans userBalance={userBalance} setUserBalance={setUserBalance} addTransaction={addTransaction} />;
+        return <InvestmentPlans userBalance={userBalance} setUserBalance={setUserBalance} />;
       case 'wallet':
-        return <WalletSection userBalance={userBalance} setUserBalance={setUserBalance} addTransaction={addTransaction} />;
+        return <WalletSection userBalance={userBalance} setUserBalance={setUserBalance} />;
       case 'referrals':
         return <ReferralSystem />;
       case 'profile':
-        return <ProfileSection onDisconnect={handleDisconnect} userBalance={userBalance} transactionHistory={transactionHistory} />;
+        return <ProfileSection onDisconnect={handleDisconnect} userBalance={userBalance} />;
+      case 'admin':
+        return currentUser?.is_admin ? (
+          <AdminPanel userBalance={userBalance} />
+        ) : (
+          <div className="p-4 text-center text-red-400">Acceso no autorizado</div>
+        );
       default:
         return <Dashboard userBalance={userBalance} coinPrices={coinPrices} setActiveTab={setActiveTab} currentUser={currentUser} />;
     }
@@ -139,7 +146,7 @@ function App() {
           <title>NeoStake - Iniciar Sesión</title>
           <meta name="description" content="Accede a tu cuenta de NeoStake para gestionar tus inversiones Web3." />
         </Helmet>
-        <AuthScreen onLogin={handleLogin} />
+        <AuthScreen />
         <Toaster />
       </>
     );
@@ -151,7 +158,7 @@ function App() {
         <title>NeoStake Dashboard - Tu Portal Web3</title>
         <meta name="description" content="Dashboard completo de NeoStake con staking, trading, proyectos Web3 y gestión de portfolio en tiempo real." />
       </Helmet>
-      
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="pb-24 min-h-screen">
           <AnimatePresence mode="wait">
@@ -167,8 +174,10 @@ function App() {
             </motion.div>
           </AnimatePresence>
         </div>
-        
-        {isWalletConnected && <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />}
+
+        {isWalletConnected && (
+          <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={currentUser?.is_admin} />
+        )}
         <Toaster />
       </div>
     </>
