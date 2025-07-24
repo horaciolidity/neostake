@@ -3,16 +3,15 @@ import { motion } from 'framer-motion';
 import { Home, Droplet, Wallet, Gift, User, Shield } from 'lucide-react';
 
 const MobileNavigation = ({ activeTab, setActiveTab, isAdmin }) => {
-  const baseNavItems = [
-  { id: 'home', name: 'Home', icon: Home },
-  { id: 'plans', name: 'Planes', icon: Droplet },
-  { id: 'wallet', name: 'Cartera', icon: Wallet },
-  { id: 'referrals', name: 'Referidos', icon: Gift },
-  { id: 'profile', name: 'Perfil', icon: User },
-  ...(isAdmin ? [{ id: 'admin', name: 'Admin', icon: User }] : []),
+  const navItems = [
+    { id: 'home', name: 'Home', icon: Home },
+    { id: 'plans', name: 'Planes', icon: Droplet },
+    { id: 'wallet', name: 'Cartera', icon: Wallet },
+    { id: 'referrals', name: 'Referidos', icon: Gift },
+    { id: 'profile', name: 'Perfil', icon: User },
+    ...(isAdmin ? [{ id: 'admin', name: 'Admin', icon: Shield }] : []),
   ];
 
- 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-gray-800 mobile-nav-shadow z-50">
       <div className="flex items-center justify-around py-2">
