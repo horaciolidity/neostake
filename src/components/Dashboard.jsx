@@ -27,7 +27,8 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
       >
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-gray-400">Bienvenido de vuelta, {currentUser}</p>
+         <p className="text-gray-400">Bienvenido de vuelta, {currentUser?.full_name || 'Usuario'}</p>
+
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
