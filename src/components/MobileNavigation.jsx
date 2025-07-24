@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, Droplet, Wallet, Gift, User } from 'lucide-react';
+import { Home, Droplet, Wallet, Gift, User, Shield } from 'lucide-react';
 
-const MobileNavigation = ({ activeTab, setActiveTab }) => {
-  const navItems = [
+const MobileNavigation = ({ activeTab, setActiveTab, isAdmin }) => {
+  const baseNavItems = [
     { id: 'home', name: 'Home', icon: Home },
     { id: 'plans', name: 'Planes', icon: Droplet },
     { id: 'wallet', name: 'Cartera', icon: Wallet },
@@ -11,18 +11,22 @@ const MobileNavigation = ({ activeTab, setActiveTab }) => {
     { id: 'profile', name: 'Perfil', icon: User },
   ];
 
+  const navItems = isAdmin
+    ? [...baseNavItems, { id: 'admin', name: 'Admin', icon: Shield }]
+    : baseNavItems;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-gray-800 mobile-nav-shadow z-50">
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+
           return (
             <motion.button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 w-1/5 ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 w-1/6 ${
                 isActive 
                   ? 'text-green-400' 
                   : 'text-gray-400 hover:text-white'
