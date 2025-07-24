@@ -8,8 +8,9 @@ import WalletSection from '@/components/WalletSection';
 import ProfileSection from '@/components/ProfileSection';
 import MobileNavigation from '@/components/MobileNavigation';
 import ReferralSystem from '@/components/ReferralSystem';
+import AdminPanel from '@/components/AdminPanel'; // ✅ IMPORTANTE
 
-const MainLayout = ({ userBalance, setUserBalance, onDisconnect }) => {
+const MainLayout = ({ userBalance, setUserBalance, onDisconnect, currentUser }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [coinPrices, setCoinPrices] = useState({
     bitcoin: { usd: 68000.50, usd_24h_change: 2.5 },
@@ -38,13 +39,20 @@ const MainLayout = ({ userBalance, setUserBalance, onDisconnect }) => {
     const btcValue = userBalance.btc * coinPrices.bitcoin.usd;
     const ethValue = userBalance.eth * coinPrices.ethereum.usd;
     const totalUsd = userBalance.usdt + btcValue + ethValue;
-    setUserBalance(prev => ({...prev, usd: totalUsd}));
+    setUserBalance(prev => ({ ...prev, usd: totalUsd }));
   }, [userBalance.usdt, userBalance.btc, userBalance.eth, coinPrices, setUserBalance]);
 
   const renderActiveSection = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard userBalance={userBalance} coinPrices={coinPrices} setActiveTab={setActiveTab} />;
+        return (
+          <Dashboard
+            userBalance={userBalance}
+            coinPrices={coinPrices}
+            setActiveTab={setActiveTab}
+            currentUser={currentUser}
+          />
+        );
       case 'plans':
         return <InvestmentPlans userBalance={userBalance} setUserBalance={setUserBalance} />;
       case 'wallet':
@@ -53,8 +61,21 @@ const MainLayout = ({ userBalance, setUserBalance, onDisconnect }) => {
         return <ReferralSystem />;
       case 'profile':
         return <ProfileSection onDisconnect={onDisconnect} userBalance={userBalance} />;
+      case 'admin':
+        return currentUser?.is_admin ? (
+          <AdminPanel userBalance={userBalance} />
+        ) : (
+          <div className="p-4 text-center text-red-400">Acceso no autorizado</div>
+        );
       default:
-        return <Dashboard userBalance={userBalance} coinPrices={coinPrices} setActiveTab={setActiveTab} />;
+        return (
+          <Dashboard
+            userBalance={userBalance}
+            coinPrices={coinPrices}
+            setActiveTab={setActiveTab}
+            currentUser={currentUser}
+          />
+        );
     }
   };
 
@@ -62,9 +83,12 @@ const MainLayout = ({ userBalance, setUserBalance, onDisconnect }) => {
     <>
       <Helmet>
         <title>NeoStake Dashboard - Tu Portal Web3</title>
-        <meta name="description" content="Dashboard completo de NeoStake con staking, trading, proyectos Web3 y gestión de portfolio en tiempo real." />
+        <meta
+          name="description"
+          content="Dashboard completo de NeoStake con staking, trading, proyectos Web3 y gestión de portfolio en tiempo real."
+        />
       </Helmet>
-      
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="pb-24 min-h-screen">
           <AnimatePresence mode="wait">
@@ -80,8 +104,13 @@ const MainLayout = ({ userBalance, setUserBalance, onDisconnect }) => {
             </motion.div>
           </AnimatePresence>
         </div>
-        
-        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        <MobileNavigation
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isAdmin={currentUser?.is_admin}
+        />
+
         <Toaster />
       </div>
     </>
