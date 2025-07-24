@@ -4,11 +4,12 @@ import { Home, Droplet, Wallet, Gift, User, Shield } from 'lucide-react';
 
 const MobileNavigation = ({ activeTab, setActiveTab, isAdmin }) => {
   const baseNavItems = [
-    { id: 'home', name: 'Home', icon: Home },
-    { id: 'plans', name: 'Planes', icon: Droplet },
-    { id: 'wallet', name: 'Cartera', icon: Wallet },
-    { id: 'referrals', name: 'Referidos', icon: Gift },
-    { id: 'profile', name: 'Perfil', icon: User },
+  { id: 'home', name: 'Home', icon: Home },
+  { id: 'plans', name: 'Planes', icon: Droplet },
+  { id: 'wallet', name: 'Cartera', icon: Wallet },
+  { id: 'referrals', name: 'Referidos', icon: Gift },
+  { id: 'profile', name: 'Perfil', icon: User },
+  ...(isAdmin ? [{ id: 'admin', name: 'Admin', icon: User }] : []),
   ];
 
   const navItems = isAdmin
