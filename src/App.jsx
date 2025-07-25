@@ -11,7 +11,7 @@ import ProfileSection from '@/components/ProfileSection';
 import MobileNavigation from '@/components/MobileNavigation';
 import ReferralSystem from '@/components/ReferralSystem';
 import AdminPanel from '@/components/AdminPanel';
-import { supabase } from '@/supabaseClient'; // Asegúrate de tener esto configurado
+import { supabase } from '@/lib/supabaseClient';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
