@@ -19,12 +19,16 @@ const AdminPanel = () => {
     .single();
 
   if (error || !userProfile) {
-    console.error('Error Supabase:', error);
-    toast({ title: 'Usuario no encontrado', description: 'Verifica el correo electrónico.' });
+    console.error('Error al buscar usuario:', error);
+    toast({
+      title: 'Usuario no encontrado',
+      description: 'Verifica el correo electrónico.',
+    });
     return;
   }
 
-  const updatedBalance = (userProfile[`balance_${currency}`] || 0) + parseFloat(amount);
+  const updatedBalance =
+    (userProfile[`balance_${currency}`] || 0) + parseFloat(amount);
 
   const { error: updateError } = await supabase
     .from('profiles')
@@ -32,16 +36,23 @@ const AdminPanel = () => {
     .eq('id', userProfile.id);
 
   if (updateError) {
-    console.error('Error actualizando saldo:', updateError);
-    toast({ title: 'Error', description: 'No se pudo actualizar el saldo.' });
+    console.error('Error al actualizar saldo:', updateError);
+    toast({
+      title: 'Error al recargar',
+      description: 'No se pudo actualizar el saldo.',
+    });
     return;
   }
 
-  toast({ title: 'Saldo recargado', description: `Se añadieron ${amount} ${currency.toUpperCase()} a ${cleanEmail}` });
+  toast({
+    title: 'Saldo recargado',
+    description: `Se añadieron ${amount} ${currency.toUpperCase()} a ${cleanEmail}`,
+  });
 
   setEmail('');
   setAmount('');
 };
+
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-4">
