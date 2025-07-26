@@ -7,52 +7,61 @@ const AdminPanel = () => {
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('usdt');
-  
 
   const handleRecharge = async () => {
-  const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
 
-  const { data: userProfile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('email', cleanEmail)
-    .single();
+    // 1. Buscar el usuario en auth.users
+    const {
+      data: { users },
+      error: authError
+    } = await supabase.auth.admin.listUsers();
 
-  if (error || !userProfile) {
-    console.error('Error al buscar usuario:', error);
+    if (authError) {
+      toast({ title: 'Error en auth', description: 'No se pudo obtener los usuarios.' });
+      return;
+    }
+
+    const targetUser = users.find(u => u.email === cleanEmail);
+
+    if (!targetUser) {
+      toast({ title: 'Usuario no encontrado', description: 'Verifica el correo electrónico.' });
+      return;
+    }
+
+    // 2. Buscar el perfil correspondiente
+    const { data: userProfile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', targetUser.id)
+      .single();
+
+    if (error || !userProfile) {
+      toast({ title: 'Perfil no encontrado', description: 'No se encontró el perfil vinculado al usuario.' });
+      return;
+    }
+
+    // 3. Actualizar el balance
+    const updatedBalance = (userProfile[`balance_${currency}`] || 0) + parseFloat(amount);
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ [`balance_${currency}`]: updatedBalance })
+      .eq('id', targetUser.id);
+
+    if (updateError) {
+      toast({ title: 'Error al actualizar saldo', description: 'No se pudo guardar el nuevo saldo.' });
+      return;
+    }
+
     toast({
-      title: 'Usuario no encontrado',
-      description: 'Verifica el correo electrónico.',
+      title: 'Saldo recargado',
+      description: `Se añadieron ${amount} ${currency.toUpperCase()} a ${cleanEmail}`
     });
-    return;
-  }
 
-  const updatedBalance =
-    (userProfile[`balance_${currency}`] || 0) + parseFloat(amount);
-
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ [`balance_${currency}`]: updatedBalance })
-    .eq('id', userProfile.id);
-
-  if (updateError) {
-    console.error('Error al actualizar saldo:', updateError);
-    toast({
-      title: 'Error al recargar',
-      description: 'No se pudo actualizar el saldo.',
-    });
-    return;
-  }
-
-  toast({
-    title: 'Saldo recargado',
-    description: `Se añadieron ${amount} ${currency.toUpperCase()} a ${cleanEmail}`,
-  });
-
-  setEmail('');
-  setAmount('');
-};
-
+    setEmail('');
+    setAmount('');
+  };
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-4">
@@ -78,6 +87,7 @@ const AdminPanel = () => {
       >
         <option value="usdt">USDT</option>
         <option value="eth">ETH</option>
+        <option value="btc">BTC</option>
       </select>
       <Button onClick={handleRecharge} className="w-full">
         Recargar saldo
