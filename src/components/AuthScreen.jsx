@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Zap, LogIn, Lock, UserPlus, Mail } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useNavigate } from 'react-router-dom'; // ✅ agregado
 
 const AuthScreen = ({ onLogin }) => {
+  const navigate = useNavigate(); // ✅ inicializado
   const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +29,8 @@ const AuthScreen = ({ onLogin }) => {
       });
     } else {
       toast({ title: "✅ ¡Bienvenido!", description: "Sesión iniciada correctamente." });
-      onLogin(data.user.email);
+      onLogin?.(data.user.email);
+      navigate('/dashboard'); // ✅ redirección automática
     }
   };
 
