@@ -48,13 +48,9 @@ function App() {
     return () => clearInterval(priceInterval);
   }, []);
 
-  // ✅ Obtener perfil desde Supabase
   useEffect(() => {
     const fetchUser = async () => {
-      const {
-        data: { user },
-        error
-      } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
         setIsAuthenticated(false);
         return;
@@ -112,6 +108,25 @@ function App() {
     setActiveTab('home');
   };
 
+  const handleSuccessfulLogin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, email, balance_usdt, balance_btc, balance_eth, is_admin')
+      .eq('id', user.id)
+      .single();
+
+    setIsAuthenticated(true);
+    setCurrentUser(profile);
+    setUserBalance({
+      usdt: Number(profile.balance_usdt || 0),
+      btc: Number(profile.balance_btc || 0),
+      eth: Number(profile.balance_eth || 0),
+      usd: 0
+    });
+  };
+
   const renderActiveSection = () => {
     if (!isWalletConnected) {
       return <WelcomeScreen onConnect={handleWalletConnect} userBalance={userBalance} />;
@@ -146,7 +161,7 @@ function App() {
           <title>NeoStake - Iniciar Sesión</title>
           <meta name="description" content="Accede a tu cuenta de NeoStake para gestionar tus inversiones Web3." />
         </Helmet>
-        <AuthScreen />
+        <AuthScreen onLogin={handleSuccessfulLogin} />
         <Toaster />
       </>
     );
