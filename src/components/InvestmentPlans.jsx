@@ -54,54 +54,46 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
     if (color === 'purple') return 'border-purple-500/50 hover:border-purple-500';
   };
 
-  const handleInvest = async () => {
-    const amount = parseFloat(investmentAmount);
-    if (!amount || amount <= 0) {
-      toast({ title: "❌ Cantidad inválida", description: "Por favor, ingresa una cantidad válida." });
-      return;
-    }
-    if (amount < selectedPlan.min || amount > selectedPlan.max) {
-      toast({ title: "❌ Fuera de rango", description: `La inversión debe ser entre ${selectedPlan.min} y ${selectedPlan.max} USDT.` });
-      return;
-    }
-    if (amount > userBalance.usdt) {
-      toast({ title: "❌ Saldo insuficiente", description: "No tienes suficiente USDT para esta inversión." });
-      return;
-    }
+ const handleInvest = async () => {
+  const amount = parseFloat(investmentAmount);
+  if (!amount || amount <= 0 || !selectedPlan) {
+    toast({ title: "❌ Error", description: "Selecciona un plan y un monto válido." });
+    return;
+  }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  // Verificar saldo suficiente
+  if (amount > userBalance) {
+    toast({ title: "❌ Saldo insuficiente", description: "Tu saldo actual no cubre esa inversión." });
+    return;
+  }
 
-    // Actualizar saldo en Supabase
-    const newBalance = userBalance.usdt - amount;
-    const { error: balanceError } = await supabase
-      .from('profiles')
-      .update({ balance_usdt: newBalance })
-      .eq('id', user.id);
+  // Calcular fechas
+  const now = new Date();
+  const endDate = new Date();
+  const durationDays = parseInt(selectedPlan.duration.split(" ")[0]);
+  endDate.setDate(now.getDate() + durationDays);
 
-    if (balanceError) {
-      toast({ title: "Error al actualizar saldo", description: balanceError.message });
-      return;
-    }
+  // Guardar inversión en Supabase
+  const { data, error } = await supabase.from("investments").insert([{
+    user_id: supabase.auth.user().id,
+    amount,
+    plan_id: selectedPlan.id,
+    apy: selectedPlan.apy,
+    start_date: now.toISOString(),
+    end_date: endDate.toISOString(),
+    status: "active",
+  }]);
 
-    // Registrar compra
-    await supabase.from('purchases').insert({
-      user_id: user.id,
-      plan_name: selectedPlan.name,
-      amount_usdt: amount,
-    });
+  if (error) {
+    toast({ title: "❌ Error al invertir", description: error.message });
+    return;
+  }
 
-    // Actualizar balance en frontend
-    setUserBalance(prev => ({ ...prev, usdt: newBalance, usd: newBalance }));
-
-    toast({
-      title: "🚀 ¡Inversión Exitosa!",
-      description: `Has invertido ${amount} USDT en el ${selectedPlan.name}.`,
-    });
-
-    setSelectedPlan(null);
-    setInvestmentAmount('');
-  };
+  // Descontar del saldo local (opcional)
+  setUserBalance((prev) => prev - amount);
+  setInvestmentAmount("");
+  toast({ title: "✅ Inversión realizada", description: `Invertiste ${amount} USDT en ${selectedPlan.name}` });
+};
 
   return (
     <div className="p-4 space-y-6">
