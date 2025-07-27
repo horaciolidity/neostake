@@ -6,46 +6,44 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, context) {
-  const body = await req.json(); // para Edge Functions
-  const { userId, amount, currency } = body;
-
-  if (!userId || !amount || !currency) {
-    return new Response(JSON.stringify({ error: 'Datos incompletos' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const { data: profile, error: fetchError } = await supabase
-    .from('profiles')
-    .select(`balance_${currency}`)
-    .eq('id', userId)
-    .single();
+  try {
+    const { userId, amount, currency } = req.body;
 
-  if (fetchError || !profile) {
-    return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    if (!userId || !amount || !currency) {
+      return res.status(400).json({ error: 'Datos incompletos' });
+    }
+
+    const columnName = `balance_${currency.toLowerCase()}`;
+
+    const { data: user, error: fetchError } = await supabase
+      .from('profiles')
+      .select(columnName)
+      .eq('id', userId)
+      .single();
+
+    if (fetchError || !user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const newBalance = (user[columnName] || 0) + parseFloat(amount);
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ [columnName]: newBalance })
+      .eq('id', userId);
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message });
+    }
+
+    return res.status(200).json({ success: true, newBalance });
+  } catch (err) {
+    console.error('Error inesperado:', err);
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
-
-  const nuevoSaldo = Number(profile[`balance_${currency}`] || 0) + Number(amount);
-
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ [`balance_${currency}`]: nuevoSaldo })
-    .eq('id', userId);
-
-  if (updateError) {
-    return new Response(JSON.stringify({ error: updateError.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
 }
