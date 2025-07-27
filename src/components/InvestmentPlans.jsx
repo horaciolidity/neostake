@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Droplet, TrendingUp, Zap, Shield, Check } from 'lucide-react';
+import { TrendingUp, Zap, Shield, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
@@ -54,46 +54,61 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
     if (color === 'purple') return 'border-purple-500/50 hover:border-purple-500';
   };
 
- const handleInvest = async () => {
-  const amount = parseFloat(investmentAmount);
-  if (!amount || amount <= 0 || !selectedPlan) {
-    toast({ title: "❌ Error", description: "Selecciona un plan y un monto válido." });
-    return;
-  }
+  const handleInvest = async () => {
+    const amount = parseFloat(investmentAmount);
+    if (!amount || amount <= 0) {
+      toast({ title: '❌ Cantidad inválida', description: 'Por favor, ingresa una cantidad válida.' });
+      return;
+    }
+    if (amount < selectedPlan.min || amount > selectedPlan.max) {
+      toast({ title: '❌ Fuera de rango', description: `La inversión debe ser entre ${selectedPlan.min} y ${selectedPlan.max} USDT.` });
+      return;
+    }
+    if (amount > userBalance.usdt) {
+      toast({ title: '❌ Saldo insuficiente', description: 'No tienes suficiente USDT para esta inversión.' });
+      return;
+    }
 
-  // Verificar saldo suficiente
-  if (amount > userBalance) {
-    toast({ title: "❌ Saldo insuficiente", description: "Tu saldo actual no cubre esa inversión." });
-    return;
-  }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  // Calcular fechas
-  const now = new Date();
-  const endDate = new Date();
-  const durationDays = parseInt(selectedPlan.duration.split(" ")[0]);
-  endDate.setDate(now.getDate() + durationDays);
+    const newBalance = userBalance.usdt - amount;
+    const { error: balanceError } = await supabase
+      .from('profiles')
+      .update({ balance_usdt: newBalance })
+      .eq('id', user.id);
 
-  // Guardar inversión en Supabase
-  const { data, error } = await supabase.from("investments").insert([{
-    user_id: supabase.auth.user().id,
-    amount,
-    plan_id: selectedPlan.id,
-    apy: selectedPlan.apy,
-    start_date: now.toISOString(),
-    end_date: endDate.toISOString(),
-    status: "active",
-  }]);
+    if (balanceError) {
+      toast({ title: 'Error al actualizar saldo', description: balanceError.message });
+      return;
+    }
 
-  if (error) {
-    toast({ title: "❌ Error al invertir", description: error.message });
-    return;
-  }
+    const durationDays = parseInt(selectedPlan.duration.split(' ')[0]);
+    const apy = parseFloat(selectedPlan.apy.replace('%', '')) / 100;
+    const expectedReturn = amount + (amount * apy);
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(startDate.getDate() + durationDays);
 
-  // Descontar del saldo local (opcional)
-  setUserBalance((prev) => prev - amount);
-  setInvestmentAmount("");
-  toast({ title: "✅ Inversión realizada", description: `Invertiste ${amount} USDT en ${selectedPlan.name}` });
-};
+    await supabase.from('investments').insert({
+      user_id: user.id,
+      plan_name: selectedPlan.name,
+      amount,
+      expected_return: expectedReturn,
+      start_date: startDate.toISOString(),
+      end_date: endDate.toISOString(),
+    });
+
+    setUserBalance(prev => ({ ...prev, usdt: newBalance }));
+
+    toast({
+      title: '🚀 ¡Inversión Exitosa!',
+      description: `Has invertido ${amount} USDT en el ${selectedPlan.name}.`,
+    });
+
+    setSelectedPlan(null);
+    setInvestmentAmount('');
+  };
 
   return (
     <div className="p-4 space-y-6">
@@ -102,25 +117,14 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
         <p className="text-gray-400">Maximiza tus ganancias con nuestros planes de inversión en USDT.</p>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card p-4 rounded-xl text-center"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-4 rounded-xl text-center">
         <p className="text-sm text-gray-400">Tu balance de USDT</p>
-        <p className="text-2xl font-bold neon-text">{userBalance.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</p>
+        <p className="text-2xl font-bold neon-text">{userBalance.usdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</p>
       </motion.div>
 
       <div className="space-y-4">
         {plans.map((plan, index) => (
-          <motion.div
-            key={plan.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + index * 0.1 }}
-            className={`glass-card p-4 rounded-xl border-2 ${getPlanColor(plan.color)}`}
-          >
+          <motion.div key={plan.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + index * 0.1 }} className={`glass-card p-4 rounded-xl border-2 ${getPlanColor(plan.color)}`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 {plan.icon}
@@ -147,10 +151,7 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
               ))}
             </ul>
             <p className="text-xs text-gray-400 mb-4">Inversión: {plan.min} - {plan.max} USDT</p>
-            <Button
-              onClick={() => setSelectedPlan(plan)}
-              className={`w-full bg-${plan.color}-500/20 text-${plan.color}-400 hover:bg-${plan.color}-500/30`}
-            >
+            <Button onClick={() => setSelectedPlan(plan)} className={`w-full bg-${plan.color}-500/20 text-${plan.color}-400 hover:bg-${plan.color}-500/30`}>
               Invertir Ahora
             </Button>
           </motion.div>
@@ -158,18 +159,8 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
       </div>
 
       {selectedPlan && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPlan(null)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="glass-card p-6 rounded-2xl max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedPlan(null)}>
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-card p-6 rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <div className="text-center mb-6">
               {selectedPlan.icon}
               <h3 className="text-xl font-bold mt-2">{selectedPlan.name}</h3>
@@ -178,13 +169,7 @@ const InvestmentPlans = ({ userBalance, setUserBalance }) => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Cantidad a invertir (USDT)</label>
-                <input
-                  type="number"
-                  value={investmentAmount}
-                  onChange={(e) => setInvestmentAmount(e.target.value)}
-                  placeholder={`Min: ${selectedPlan.min} / Max: ${selectedPlan.max}`}
-                  className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-green-400 focus:outline-none"
-                />
+                <input type="number" value={investmentAmount} onChange={(e) => setInvestmentAmount(e.target.value)} placeholder={`Min: ${selectedPlan.min} / Max: ${selectedPlan.max}`} className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-green-400 focus:outline-none" />
                 <p className="text-xs text-gray-400 mt-1">Balance: {userBalance.usdt.toFixed(2)} USDT</p>
               </div>
               <div className="flex space-x-3">
