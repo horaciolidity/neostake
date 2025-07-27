@@ -6,45 +6,54 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
+export default async function handler(req, context) {
   try {
-    const { userId, amount, currency } = req.body;
+    const body = await req.json();
+    const { userId, amount, currency } = body;
 
-    if (!userId || !amount || !currency) {
-      return res.status(400).json({ error: 'Datos incompletos' });
+    if (!userId || amount == null || !currency) {
+      return new Response(JSON.stringify({ error: 'Datos incompletos' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    const columnName = `balance_${currency.toLowerCase()}`;
-
-    const { data: user, error: fetchError } = await supabase
+    const { data: profile, error: fetchError } = await supabase
       .from('profiles')
-      .select(columnName)
+      .select(`balance_${currency}`)
       .eq('id', userId)
-      .maybeSingle();
+      .single();
 
-    if (fetchError || !user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (fetchError || !profile) {
+      return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    const currentBalance = parseFloat(user[columnName]) || 0;
-    const updatedBalance = currentBalance + parseFloat(amount);
+    const currentBalance = profile[`balance_${currency}`] || 0;
+    const newBalance = currentBalance + amount;
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ [columnName]: updatedBalance })
+      .update({ [`balance_${currency}`]: newBalance })
       .eq('id', userId);
 
     if (updateError) {
-      return res.status(500).json({ error: updateError.message });
+      return new Response(JSON.stringify({ error: updateError.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    return res.status(200).json({ success: true, newBalance: updatedBalance });
-  } catch (err) {
-    console.error('Error inesperado:', err);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    return new Response(JSON.stringify({ success: true, newBalance }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Error interno del servidor' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
