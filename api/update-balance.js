@@ -1,3 +1,4 @@
+// /api/update-balance.js
 import { createClient } from '@supabase/supabase-js';
 import { Buffer } from 'buffer';
 
