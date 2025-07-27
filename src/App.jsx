@@ -26,26 +26,42 @@ function App() {
   });
 
   const [coinPrices, setCoinPrices] = useState({
-    bitcoin: { usd: 68000.50, usd_24h_change: 2.5 },
-    ethereum: { usd: 3500.75, usd_24h_change: -1.2 },
-    tether: { usd: 1.00, usd_24h_change: 0.01 },
+    bitcoin: { usd: 0, usd_24h_change: 0 },
+    ethereum: { usd: 0, usd_24h_change: 0 },
+    tether: { usd: 1.00, usd_24h_change: 0 },
   });
 
+  // 🔁 Obtener precios reales desde CoinGecko
   useEffect(() => {
-    const priceInterval = setInterval(() => {
-      setCoinPrices(prev => ({
-        bitcoin: {
-          usd: prev.bitcoin.usd + (Math.random() - 0.5) * 100,
-          usd_24h_change: prev.bitcoin.usd_24h_change + (Math.random() - 0.5) * 0.1
-        },
-        ethereum: {
-          usd: prev.ethereum.usd + (Math.random() - 0.5) * 50,
-          usd_24h_change: prev.ethereum.usd_24h_change + (Math.random() - 0.5) * 0.1
-        },
-        tether: { usd: 1.00, usd_24h_change: 0.01 },
-      }));
-    }, 5000);
-    return () => clearInterval(priceInterval);
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether&vs_currencies=usd&include_24hr_change=true'
+        );
+        const data = await res.json();
+        setCoinPrices({
+          bitcoin: {
+            usd: data.bitcoin.usd,
+            usd_24h_change: data.bitcoin.usd_24h_change,
+          },
+          ethereum: {
+            usd: data.ethereum.usd,
+            usd_24h_change: data.ethereum.usd_24h_change,
+          },
+          tether: {
+            usd: data.tether.usd,
+            usd_24h_change: data.tether.usd_24h_change,
+          },
+        });
+      } catch (error) {
+        console.error('Error fetching coin prices:', error);
+      }
+    };
+
+    fetchPrices(); // primer fetch
+    const interval = setInterval(fetchPrices, 30000); // cada 30s
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
