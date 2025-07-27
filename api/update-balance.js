@@ -6,40 +6,46 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
-  const { userId, amount, currency } = req.body;
+export default async function handler(req, context) {
+  const body = await req.json(); // para Edge Functions
+  const { userId, amount, currency } = body;
 
   if (!userId || !amount || !currency) {
-    return res.status(400).json({ error: 'Datos incompletos' });
+    return new Response(JSON.stringify({ error: 'Datos incompletos' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
-  // 1. Obtener el perfil
-  const { data: userProfile, error: fetchError } = await supabase
+  const { data: profile, error: fetchError } = await supabase
     .from('profiles')
-    .select('*')
+    .select(`balance_${currency}`)
     .eq('id', userId)
     .single();
 
-  if (fetchError || !userProfile) {
-    return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (fetchError || !profile) {
+    return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
-  // 2. Calcular nuevo balance
-  const newBalance = (userProfile[`balance_${currency}`] || 0) + parseFloat(amount);
+  const nuevoSaldo = Number(profile[`balance_${currency}`] || 0) + Number(amount);
 
-  // 3. Actualizar
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({ [`balance_${currency}`]: newBalance })
+    .update({ [`balance_${currency}`]: nuevoSaldo })
     .eq('id', userId);
 
   if (updateError) {
-    return res.status(500).json({ error: updateError.message });
+    return new Response(JSON.stringify({ error: updateError.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
-  return res.status(200).json({ success: true });
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
