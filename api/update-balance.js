@@ -1,4 +1,4 @@
-// api/update-balance.js
+// /api/update-balance.js
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,21 +7,44 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  const body = await req.json(); // Vercel usa Request estándar
-  const { userId, newBalance } = body;
-
-  if (!userId || newBalance == null) {
-    return new Response(JSON.stringify({ error: 'Datos incompletos' }), { status: 400 });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const { error } = await supabase
+  let body = {};
+  try {
+    body = JSON.parse(req.body); // Válido para Vercel + Vite (Node.js runtime)
+  } catch (error) {
+    return res.status(400).json({ error: 'Cuerpo inválido' });
+  }
+
+  const { email, amount, currency } = body;
+
+  if (!email || !amount || !currency) {
+    return res.status(400).json({ error: 'Faltan datos' });
+  }
+
+  // Buscar el usuario en la tabla "profiles" por email
+  const { data: user, error: userError } = await supabase
     .from('profiles')
-    .update({ balance_usdt: newBalance })
-    .eq('id', userId);
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (userError || !user) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
   }
 
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+  const updatedBalance = (user[`balance_${currency}`] || 0) + parseFloat(amount);
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ [`balance_${currency}`]: updatedBalance })
+    .eq('id', user.id);
+
+  if (updateError) {
+    return res.status(500).json({ error: 'Error al actualizar saldo' });
+  }
+
+  return res.status(200).json({ success: true });
 }
