@@ -4,19 +4,19 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/components/ui/use-toast';
 
 const AdminPanel = () => {
-  const [email, setEmail] = useState('');
+  const [userId, setuserId] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('usdt');
 
 const handleRecharge = async () => {
-  const cleanEmail = email.trim().toLowerCase();
+  const cleanuserId = userId.trim().toLowerCase();
 
   try {
     const res = await fetch('/api/update-balance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: cleanEmail,
+        userId: cleanuserId,
         amount: parseFloat(amount),
         currency
       })
@@ -37,7 +37,7 @@ const handleRecharge = async () => {
       description: `Nuevo balance actualizado`
     });
 
-    setEmail('');
+    setuserId('');
     setAmount('');
   } catch (err) {
     toast({
@@ -51,10 +51,10 @@ const handleRecharge = async () => {
     <div className="max-w-md mx-auto p-6 space-y-4">
       <h2 className="text-xl font-bold">Panel de Administrador</h2>
       <input
-        type="email"
+        type="userId"
         placeholder="Correo del usuario"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        value={userId}
+        onChange={(e) => setuserId(e.target.value)}
         className="w-full p-2 rounded border border-gray-700 bg-gray-900 text-white"
       />
       <input
