@@ -9,59 +9,43 @@ const AdminPanel = () => {
   const [currency, setCurrency] = useState('usdt');
 
   const handleRecharge = async () => {
-    const cleanEmail = email.trim().toLowerCase();
+  const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Buscar el usuario en auth.users
-    const {
-      data: { users },
-      error: authError
-    } = await supabase.auth.admin.listUsers();
+  try {
+    const res = await fetch('/api/update-balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: cleanEmail,
+        amount: parseFloat(amount),
+        currency
+      })
+    });
 
-    if (authError) {
-      toast({ title: 'Error en auth', description: 'No se pudo obtener los usuarios.' });
-      return;
-    }
+    const data = await res.json();
 
-    const targetUser = users.find(u => u.email === cleanEmail);
-
-    if (!targetUser) {
-      toast({ title: 'Usuario no encontrado', description: 'Verifica el correo electrónico.' });
-      return;
-    }
-
-    // 2. Buscar el perfil correspondiente
-    const { data: userProfile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', targetUser.id)
-      .single();
-
-    if (error || !userProfile) {
-      toast({ title: 'Perfil no encontrado', description: 'No se encontró el perfil vinculado al usuario.' });
-      return;
-    }
-
-    // 3. Actualizar el balance
-    const updatedBalance = (userProfile[`balance_${currency}`] || 0) + parseFloat(amount);
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ [`balance_${currency}`]: updatedBalance })
-      .eq('id', targetUser.id);
-
-    if (updateError) {
-      toast({ title: 'Error al actualizar saldo', description: 'No se pudo guardar el nuevo saldo.' });
+    if (!res.ok) {
+      toast({
+        title: 'Error al recargar',
+        description: data.error || 'Error desconocido'
+      });
       return;
     }
 
     toast({
       title: 'Saldo recargado',
-      description: `Se añadieron ${amount} ${currency.toUpperCase()} a ${cleanEmail}`
+      description: `Nuevo balance actualizado`
     });
 
     setEmail('');
     setAmount('');
-  };
+  } catch (err) {
+    toast({
+      title: 'Error de red',
+      description: err.message
+    });
+  }
+};
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-4">
