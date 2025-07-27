@@ -6,11 +6,26 @@ import { Button } from '@/components/ui/button';
 const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
   const [showBalance, setShowBalance] = React.useState(true);
   
-  const stats = [
-    { label: 'Ganancias 24h', value: '+$234.56', change: '+5.2%', positive: true },
-    { label: 'Inversiones Activas', value: '$8,450.00', change: '+12.8%', positive: true },
-    { label: 'Recompensas', value: '$128.40', change: 'Reclamar', positive: true },
-  ];
+ const stats = [
+  {
+    label: 'Ganancias 24h',
+    value: `$${(userBalance.usdt > 0 ? (userBalance.usdt * 0.03).toFixed(2) : '0.00')}`,
+    change: userBalance.usdt > 0 ? '+3.0%' : '0%',
+    positive: userBalance.usdt > 0
+  },
+  {
+    label: 'Inversiones Activas',
+    value: `$${userBalance.usdt.toFixed(2)}`,
+    change: userBalance.usdt > 0 ? '+12.8%' : '0%',
+    positive: userBalance.usdt > 0
+  },
+  {
+    label: 'Recompensas',
+    value: `$${(userBalance.usdt > 0 ? (userBalance.usdt * 0.015).toFixed(2) : '0.00')}`,
+    change: userBalance.usdt > 0 ? 'Reclamar' : '-',
+    positive: userBalance.usdt > 0
+  }
+];
 
   const marketData = [
     { name: 'Bitcoin', symbol: 'BTC', price: coinPrices.bitcoin.usd, change: coinPrices.bitcoin.usd_24h_change, icon: '₿' },
