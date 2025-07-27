@@ -8,15 +8,15 @@ const AdminPanel = () => {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('usdt');
 
- const handleRecharge = async () => {
-  const userId = '7bfe7cea-4164-4830-8148-392c2cc42b52'; // <- O el que selecciones
+const handleRecharge = async () => {
+  const cleanEmail = email.trim().toLowerCase();
 
   try {
     const res = await fetch('/api/update-balance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId,
+        email: cleanEmail,
         amount: parseFloat(amount),
         currency
       })
@@ -25,14 +25,25 @@ const AdminPanel = () => {
     const data = await res.json();
 
     if (!res.ok) {
-      toast({ title: 'Error', description: data.error || 'Algo salió mal' });
+      toast({
+        title: 'Error al recargar',
+        description: data.error || 'Error desconocido'
+      });
       return;
     }
 
-    toast({ title: 'Saldo recargado', description: 'El saldo fue actualizado correctamente' });
+    toast({
+      title: 'Saldo recargado',
+      description: `Nuevo balance actualizado`
+    });
+
+    setEmail('');
     setAmount('');
   } catch (err) {
-    toast({ title: 'Error de red', description: err.message });
+    toast({
+      title: 'Error de red',
+      description: err.message
+    });
   }
 };
 
