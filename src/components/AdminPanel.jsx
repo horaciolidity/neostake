@@ -8,51 +8,51 @@ const AdminPanel = () => {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('usdt');
 
-const handleRecharge = async () => {
-  const cleanuserId = userId.trim().toLowerCase();
+  const handleRecharge = async () => {
+    console.log("🟢 handleRecharge ejecutado", { userId, amount, currency });
 
-  try {
-    const res = await fetch('/api/update-balance', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: userId.trim(),
-        amount: parseFloat(amount),
-        currency
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast({
-        title: 'Error al recargar',
-        description: data.error || 'Error desconocido'
+    try {
+      const res = await fetch('/api/update-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId.trim(),
+          amount: parseFloat(amount),
+          currency
+        })
       });
-      return;
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({
+          title: 'Error al recargar',
+          description: data.error || 'Error desconocido'
+        });
+        return;
+      }
+
+      toast({
+        title: 'Saldo recargado',
+        description: `Nuevo balance actualizado`
+      });
+
+      setuserId('');
+      setAmount('');
+    } catch (err) {
+      toast({
+        title: 'Error de red',
+        description: err.message
+      });
     }
-
-    toast({
-      title: 'Saldo recargado',
-      description: `Nuevo balance actualizado`
-    });
-
-    setuserId('');
-    setAmount('');
-  } catch (err) {
-    toast({
-      title: 'Error de red',
-      description: err.message
-    });
-  }
-};
+  };
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-4">
       <h2 className="text-xl font-bold">Panel de Administrador</h2>
       <input
         type="text"
-        placeholder="Correo del usuario"
+        placeholder="ID del usuario (UUID)"
         value={userId}
         onChange={(e) => setuserId(e.target.value)}
         className="w-full p-2 rounded border border-gray-700 bg-gray-900 text-white"
