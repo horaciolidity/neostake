@@ -3,11 +3,9 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InvestmentDashboard from '@/components/InvestmentDashboard';
-import { useUser } from '@/lib/useUser'; // adaptalo si usás otro hook
 
 const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
   const [showBalance, setShowBalance] = React.useState(true);
-  const { user } = useUser(); // adaptalo según tu lógica
 
   const stats = [
     {
@@ -73,7 +71,7 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
 
         <div className="space-y-2">
           <div className="text-4xl font-bold neon-text">
-            {showBalance ? `$${userBalance.usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••••'}
+            {showBalance ? `$${userBalance.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '••••••'}
           </div>
           <div className="flex space-x-4 text-sm text-gray-400">
             <span>{showBalance ? `${userBalance.usdt.toFixed(2)} USDT` : '•••• USDT'}</span>
@@ -103,8 +101,7 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
         </Button>
       </motion.div>
 
-      {/* Módulo de inversiones */}
-      {user && <InvestmentDashboard userId={user.id} />}
+      <InvestmentDashboard userId={currentUser?.id} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
