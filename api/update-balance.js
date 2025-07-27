@@ -24,24 +24,25 @@ export default async function handler(req, res) {
       .from('profiles')
       .select(columnName)
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    const newBalance = (user[columnName] || 0) + parseFloat(amount);
+    const currentBalance = parseFloat(user[columnName]) || 0;
+    const updatedBalance = currentBalance + parseFloat(amount);
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ [columnName]: newBalance })
+      .update({ [columnName]: updatedBalance })
       .eq('id', userId);
 
     if (updateError) {
       return res.status(500).json({ error: updateError.message });
     }
 
-    return res.status(200).json({ success: true, newBalance });
+    return res.status(200).json({ success: true, newBalance: updatedBalance });
   } catch (err) {
     console.error('Error inesperado:', err);
     return res.status(500).json({ error: 'Error interno del servidor' });
