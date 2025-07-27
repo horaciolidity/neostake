@@ -1,54 +1,43 @@
+// api/update-balance.js
 import { createClient } from '@supabase/supabase-js';
-
-export const config = {
-  runtime: 'edge', // Para mejor performance en Vercel (opcional)
-};
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY // Solo usar aquí
 );
 
-export default async function handler(req) {
+export default async (req, res) => {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405 });
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  let body;
-  try {
-    body = await req.json();
-  } catch (e) {
-    return new Response(JSON.stringify({ error: 'Cuerpo inválido' }), { status: 400 });
+  const { userId, amount, currency } = req.body;
+
+  if (!userId || !amount || !currency) {
+    return res.status(400).json({ error: 'Datos incompletos' });
   }
 
-  const { email, amount, currency } = body;
-
-  if (!email || !amount || !currency) {
-    return new Response(JSON.stringify({ error: 'Faltan datos' }), { status: 400 });
-  }
-
-  // Buscar el perfil
-  const { data: profile, error } = await supabase
+  // Buscar perfil
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('*')
-    .eq('email', email.toLowerCase())
+    .select(`balance_${currency}`)
+    .eq('id', userId)
     .single();
 
-  if (error || !profile) {
-    return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), { status: 404 });
+  if (profileError || !profile) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
   }
 
-  const currentBalance = Number(profile[`balance_${currency}`] || 0);
-  const newBalance = currentBalance + Number(amount);
+  const newBalance = (profile[`balance_${currency}`] || 0) + parseFloat(amount);
 
-  const { error: updateError } = await supabase
+  const { error } = await supabase
     .from('profiles')
     .update({ [`balance_${currency}`]: newBalance })
-    .eq('id', profile.id);
+    .eq('id', userId);
 
-  if (updateError) {
-    return new Response(JSON.stringify({ error: updateError.message }), { status: 500 });
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
 
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
-}
+  return res.status(200).json({ success: true });
+};
