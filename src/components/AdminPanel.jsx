@@ -16,7 +16,7 @@ const handleRecharge = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: cleanuserId,
+        userId: userId.trim(),
         amount: parseFloat(amount),
         currency
       })
@@ -51,7 +51,7 @@ const handleRecharge = async () => {
     <div className="max-w-md mx-auto p-6 space-y-4">
       <h2 className="text-xl font-bold">Panel de Administrador</h2>
       <input
-        type="userId"
+        type="text"
         placeholder="Correo del usuario"
         value={userId}
         onChange={(e) => setuserId(e.target.value)}
