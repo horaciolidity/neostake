@@ -101,7 +101,7 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
         </Button>
       </motion.div>
 
-      <InvestmentDashboard userId={currentUser?.id} />
+      <InvestmentDashboard />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
