@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InvestmentDashboard from '@/components/InvestmentDashboard';
+import { useUser } from '@/lib/useUser'; // adaptalo si usás otro hook
 
 const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
   const [showBalance, setShowBalance] = React.useState(true);
+  const { user } = useUser(); // adaptalo según tu lógica
 
   const stats = [
     {
@@ -33,24 +35,6 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
     { name: 'Ethereum', symbol: 'ETH', price: coinPrices.ethereum.usd, change: coinPrices.ethereum.usd_24h_change, icon: '🔷' },
     { name: 'Tether', symbol: 'USDT', price: coinPrices.tether.usd, change: coinPrices.tether.usd_24h_change, icon: '💵' },
   ];
-const DashboardPage = () => {
-  const { user } = useUser(); // adaptalo si usás otro hook
-
-  if (!user) return <p>Cargando...</p>;
-
-  return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Panel de Usuario</h1>
-
-      {/* Mostramos las inversiones */}
-      <InvestmentDashboard userId={user.id} />
-
-      {/* ...otros módulos que ya tengas */}
-    </div>
-  );
-};
-
-export default DashboardPage;
 
   return (
     <div className="p-4 space-y-6">
@@ -89,7 +73,7 @@ export default DashboardPage;
 
         <div className="space-y-2">
           <div className="text-4xl font-bold neon-text">
-            {showBalance ? `$${userBalance.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '••••••'}
+            {showBalance ? `$${userBalance.usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••••'}
           </div>
           <div className="flex space-x-4 text-sm text-gray-400">
             <span>{showBalance ? `${userBalance.usdt.toFixed(2)} USDT` : '•••• USDT'}</span>
@@ -119,7 +103,8 @@ export default DashboardPage;
         </Button>
       </motion.div>
 
-      <InvestmentDashboard />
+      {/* Módulo de inversiones */}
+      {user && <InvestmentDashboard userId={user.id} />}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
