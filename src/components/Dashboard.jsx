@@ -2,7 +2,6 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import InvestmentDashboard from '@/components/InvestmentDashboard';
 
 const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
   const [showBalance, setShowBalance] = React.useState(true);
@@ -33,24 +32,6 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
     { name: 'Ethereum', symbol: 'ETH', price: coinPrices.ethereum.usd, change: coinPrices.ethereum.usd_24h_change, icon: '🔷' },
     { name: 'Tether', symbol: 'USDT', price: coinPrices.tether.usd, change: coinPrices.tether.usd_24h_change, icon: '💵' },
   ];
-const DashboardPage = () => {
-  const { user } = useUser(); // adaptalo si usás otro hook
-
-  if (!user) return <p>Cargando...</p>;
-
-  return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Panel de Usuario</h1>
-
-      {/* Mostramos las inversiones */}
-      <InvestmentDashboard userId={user.id} />
-
-      {/* ...otros módulos que ya tengas */}
-    </div>
-  );
-};
-
-export default DashboardPage;
 
   return (
     <div className="p-4 space-y-6">
