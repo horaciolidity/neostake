@@ -1,4 +1,4 @@
-import React from 'react';
+ import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,19 +10,19 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
   const stats = [
     {
       label: 'Ganancias 24h',
-      value: `$${(userBalance.usdt > 0 ? (userBalance.usdt * 0.03).toFixed(2) : '0.00')}`,
+      value: $${(userBalance.usdt > 0 ? (userBalance.usdt * 0.03).toFixed(2) : '0.00')},
       change: userBalance.usdt > 0 ? '+3.0%' : '0%',
       positive: userBalance.usdt > 0
     },
     {
       label: 'Inversiones Activas',
-      value: `$${userBalance.usdt.toFixed(2)}`,
+      value: $${userBalance.usdt.toFixed(2)},
       change: userBalance.usdt > 0 ? '+12.8%' : '0%',
       positive: userBalance.usdt > 0
     },
     {
       label: 'Recompensas',
-      value: `$${(userBalance.usdt > 0 ? (userBalance.usdt * 0.015).toFixed(2) : '0.00')}`,
+      value: $${(userBalance.usdt > 0 ? (userBalance.usdt * 0.015).toFixed(2) : '0.00')},
       change: userBalance.usdt > 0 ? 'Reclamar' : '-',
       positive: userBalance.usdt > 0
     }
@@ -33,6 +33,24 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
     { name: 'Ethereum', symbol: 'ETH', price: coinPrices.ethereum.usd, change: coinPrices.ethereum.usd_24h_change, icon: '🔷' },
     { name: 'Tether', symbol: 'USDT', price: coinPrices.tether.usd, change: coinPrices.tether.usd_24h_change, icon: '💵' },
   ];
+const DashboardPage = () => {
+  const { user } = useUser(); // adaptalo si usás otro hook
+
+  if (!user) return <p>Cargando...</p>;
+
+  return (
+    <div className="p-6 space-y-8">
+      <h1 className="text-2xl font-bold">Panel de Usuario</h1>
+
+      {/* Mostramos las inversiones */}
+      <InvestmentDashboard userId={user.id} />
+
+      {/* ...otros módulos que ya tengas */}
+    </div>
+  );
+};
+
+export default DashboardPage;
 
   return (
     <div className="p-4 space-y-6">
@@ -71,11 +89,11 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
 
         <div className="space-y-2">
           <div className="text-4xl font-bold neon-text">
-            {showBalance ? `$${userBalance.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '••••••'}
+            {showBalance ? $${userBalance.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} : '••••••'}
           </div>
           <div className="flex space-x-4 text-sm text-gray-400">
-            <span>{showBalance ? `${userBalance.usdt.toFixed(2)} USDT` : '•••• USDT'}</span>
-            <span>{showBalance ? `${userBalance.btc.toFixed(6)} BTC` : '•••• BTC'}</span>
+            <span>{showBalance ? ${userBalance.usdt.toFixed(2)} USDT : '•••• USDT'}</span>
+            <span>{showBalance ? ${userBalance.btc.toFixed(6)} BTC : '•••• BTC'}</span>
           </div>
         </div>
       </motion.div>
@@ -144,7 +162,7 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
                 </div>
                 <div className="text-right">
                   <p className="font-medium">${coin.price.toFixed(2)}</p>
-                  <div className={`flex items-center justify-end text-xs space-x-1 ${coin.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={flex items-center justify-end text-xs space-x-1 ${coin.change >= 0 ? 'text-green-400' : 'text-red-400'}}>
                     {coin.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                     <span>{coin.change.toFixed(2)}%</span>
                   </div>
@@ -159,3 +177,5 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
 };
 
 export default Dashboard;
+
+
