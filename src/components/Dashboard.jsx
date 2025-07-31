@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import WalletPanel from './WalletPanel';
-import AdminRechargePanel from './AdminRechargePanel';
+import WalletPanel from '@/WalletPanel';
+import AdminRechargePanel from '@/AdminRechargePanel';
 
 const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
   const [showBalance, setShowBalance] = React.useState(true);
