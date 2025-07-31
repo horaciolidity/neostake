@@ -1,14 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { getUserBalance, getWalletHistory, rechargeBalance } from '../lib/wallet';
 
-
-interface Props {
-  userId: string;
-}
-
-export const WalletPanel: React.FC<Props> = ({ userId }) => {
-  const [balance, setBalance] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
+const WalletPanel = ({ userId }) => {
+  const [balance, setBalance] = useState(null);
+  const [history, setHistory] = useState([]);
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -87,3 +82,5 @@ export const WalletPanel: React.FC<Props> = ({ userId }) => {
     </div>
   );
 };
+
+export default WalletPanel;
