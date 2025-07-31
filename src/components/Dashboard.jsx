@@ -98,7 +98,6 @@ const Dashboard = ({ userBalance, coinPrices, setActiveTab, currentUser }) => {
         </Button>
       </motion.div>
 
-      {/* Paneles de integración Supabase */}
       <WalletPanel user={currentUser} />
       <AdminRechargePanel />
 
