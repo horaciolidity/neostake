@@ -1,6 +1,6 @@
-import { supabase } from './supabaseClient'
+import { supabase } from './supabaseClient';
 
-export async function rechargeBalance(userId: string, amount: number, currency = 'usdt', description = 'Recarga manual') {
+export async function rechargeBalance(userId, amount, currency = 'usdt', description = 'Recarga de saldo') {
   const { error } = await supabase.from('wallet_transactions').insert([
     {
       user_id: userId,
@@ -10,23 +10,26 @@ export async function rechargeBalance(userId: string, amount: number, currency =
       description,
     },
   ]);
+
   return { success: !error, error };
 }
 
-export async function getUserBalance(userId: string) {
+export async function getUserBalance(userId) {
   const { data, error } = await supabase
     .from('profiles')
     .select('balance_usdt, balance_eth, balance_btc')
     .eq('id', userId)
     .single();
+
   return { data, error };
 }
 
-export async function getWalletHistory(userId: string) {
+export async function getWalletHistory(userId) {
   const { data, error } = await supabase
-    .from('wallet_history')
+    .from('wallet_transactions')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
+
   return { data, error };
 }
